@@ -1,0 +1,30 @@
+[
+  {
+    "name": "House",
+    "path": "models/house.glb"
+  },
+  {
+    "name": "Sports Car",
+    "path": "models/car.glb"
+  },
+  {
+    "name": "Computer",
+    "path": "models/computer.glb"
+  },
+  {
+    "name": "Laptop",
+    "path": "models/laptop.glb"
+  },
+  {
+    "name": "Assault Rifle",
+    "path": "models/rifle.glb"
+  },
+  {
+    "name": "Pistol",
+    "path": "models/pistol.glb"
+  },
+  {
+    "name": "Jet",
+    "path": "models/jet.glb"
+  }
+]

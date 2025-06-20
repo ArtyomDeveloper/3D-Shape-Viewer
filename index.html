@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Shape Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="visualizer-canvas"></canvas>
+    <canvas id="c"></canvas>
+    <audio id="bg-music" loop src="sounds/music.mp3"></audio>
+
+    <div class="sidebar">
+        <h2>Shapes</h2>
+        <div class="shape-list-container">
+            <ul id="shape-list">
+                <li data-shape="Cube" class="active">Cube</li>
+                <li data-shape="TorusKnot">Torus Knot</li>
+                <li data-shape="Teapot">Teapot</li>
+                <li data-shape="Sphere">Sphere</li>
+                <li data-shape="Torus">Torus</li>
+                <li data-shape="Cone">Cone</li>
+                <li data-shape="Cylinder">Cylinder</li>
+                <!-- Models from models.json will be added here automatically -->
+            </ul>
+        </div>
+
+        <!-- ADD THIS SECTION BACK -->
+        <div id="detail-section">
+            <h2>Detail Level</h2>
+            <div class="slider-container">
+                <span>Low</span>
+                <input type="range" id="poly-slider" min="0" max="1" step="0.01" value="0.5">
+                <span>High</span>
+            </div>
+        </div>
+        <!-- END OF SECTION TO ADD -->
+
+        <h2 for="color-picker">Color</h2>
+        <input type="color" id="color-picker" value="#ff8800">
+    </div>
+
+    <!-- Import Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TeapotGeometry.js"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>

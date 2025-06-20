@@ -17,55 +17,67 @@ const music = document.getElementById('bg-music');
 music.volume = 0.4;
 let audioContext, analyser, source;
 let dataArray, smoothedDataArray;
-let isAudioSetup = false;
+let isAudioSetup = false; // This flag is crucial
 const visualizerCanvas = document.getElementById('visualizer-canvas');
 const visualizerCtx = visualizerCanvas.getContext('2d');
 let visualizerColor = '#ff8800';
 
-function setupAudio() { if (isAudioSetup) return; audioContext = new (window.AudioContext || window.webkitAudioContext)(); analyser = audioContext.createAnalyser(); analyser.fftSize = 256; source = audioContext.createMediaElementSource(music); source.connect(analyser); analyser.connect(audioContext.destination); const bufferLength = analyser.frequencyBinCount; dataArray = new Uint8Array(bufferLength); smoothedDataArray = new Float32Array(bufferLength); music.play().then(() => isAudioSetup = true).catch(error => { console.warn("Autoplay was prevented.", error); document.body.addEventListener('click', () => setupAudio(), { once: true }); }); }
+// --- ROBUST AUDIO SETUP FUNCTION ---
+// This function will now ONLY be called after a user clicks something.
+function setupAudio() {
+    // The guard prevents this from running more than once.
+    if (isAudioSetup) return;
 
-// --- FINAL "SYMMETRICAL HORIZON" VISUALIZER ---
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    source = audioContext.createMediaElementSource(music);
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+    
+    const bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+    smoothedDataArray = new Float32Array(bufferLength);
+    
+    music.play();
+    isAudioSetup = true; // Set the flag so we don't run this again.
+}
+
 function drawVisualizer() {
+    // The drawing loop won't do anything until the audio is set up.
     if (!isAudioSetup) return;
+    
     analyser.getByteFrequencyData(dataArray);
     visualizerCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
-    
     const bufferLength = analyser.frequencyBinCount;
     const canvasWidth = visualizerCanvas.width;
     const canvasHeight = visualizerCanvas.height;
     const centerX = canvasWidth / 2;
     
-    // Smooth the data for more fluid motion
     let bassSum = 0;
     for (let i = 0; i < bufferLength; i++) {
         smoothedDataArray[i] += (dataArray[i] - smoothedDataArray[i]) * 0.1;
         if (i < 10) bassSum += smoothedDataArray[i];
     }
     const avgBass = bassSum / 10;
-    const baselineY = canvasHeight - (avgBass * 0.1) - 5; // Bass drives the baseline
+    const baselineY = canvasHeight - (avgBass * 0.1) - 5;
 
-    // Create a gradient for the fill
     const gradient = visualizerCtx.createLinearGradient(centerX, 0, centerX, canvasHeight);
     gradient.addColorStop(0.3, visualizerColor);
     gradient.addColorStop(1, 'rgba(0,0,0,0)');
     
-    // Set styles for the line and glow
     visualizerCtx.strokeStyle = visualizerColor;
     visualizerCtx.fillStyle = gradient;
     visualizerCtx.shadowColor = visualizerColor;
     visualizerCtx.shadowBlur = 10;
     visualizerCtx.lineWidth = 2;
     
-    // Create the path for the fill
     const fillPath = new Path2D();
-    fillPath.moveTo(0, canvasHeight); // bottom left
-    fillPath.lineTo(0, baselineY);    // top left
-    
-    // Create the path for the top stroke line
+    fillPath.moveTo(0, canvasHeight);
+    fillPath.lineTo(0, baselineY);
     const strokePath = new Path2D();
     strokePath.moveTo(0, baselineY);
 
-    // We only use a fraction of the frequencies for a cleaner look
     const halfBuffer = Math.floor(bufferLength * 0.7);
     for (let i = 0; i < halfBuffer; i++) {
         const barHeight = smoothedDataArray[i] * 0.4;
@@ -79,19 +91,16 @@ function drawVisualizer() {
     fillPath.lineTo(canvasWidth, canvasHeight);
     fillPath.closePath();
     
-    // Draw the symmetrical reflection by flipping the canvas context horizontally
     visualizerCtx.save();
-    visualizerCtx.scale(-1, 1); // Flip horizontally
-    visualizerCtx.translate(-canvasWidth, 0); // Move it back into view
+    visualizerCtx.scale(-1, 1);
+    visualizerCtx.translate(-canvasWidth, 0);
     visualizerCtx.fill(fillPath);
     visualizerCtx.stroke(strokePath);
-    visualizerCtx.restore(); // Restore to normal
+    visualizerCtx.restore();
     
-    // Draw the original path on top
     visualizerCtx.fill(fillPath);
     visualizerCtx.stroke(strokePath);
 }
-
 
 // --- STATE & UI ELEMENTS ---
 let currentMesh = null; let currentShapeName = 'Cube'; let isTransitioning = false;
@@ -109,10 +118,20 @@ function transitionToShape(targetElement) { if (isTransitioning) return; isTrans
 function updateAccentColor(colorStr, duration = 1.0) { const newColor = new THREE.Color(colorStr); gsap.to(activeColor, { r: newColor.r, g: newColor.g, b: newColor.b, duration: duration, ease: 'power2.out', onUpdate: () => { const currentCssColor = activeColor.getStyle(); visualizerColor = currentCssColor; const root = document.documentElement; root.style.setProperty('--accent-color', currentCssColor); const gradient = `linear-gradient(90deg, rgba(${activeColor.r*255}, ${activeColor.g*255}, ${activeColor.b*255}, 0.5) 0%, rgba(${activeColor.r*255}, ${activeColor.g*255}, ${activeColor.b*255}, 0.15) 100%)`; root.style.setProperty('--accent-color-gradient', gradient); if (currentMesh) { currentMesh.traverse(child => { if (child.isMesh) { child.material.color.copy(activeColor); } }); } } }); }
 function debounce(func, wait) { let timeout; return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
 
-// --- EVENT LISTENERS ---
+// --- EVENT LISTENERS (UPDATED) ---
 shapeList.addEventListener('mouseover', (e) => { if (e.target.closest('li')) playSound('sounds/hover.mp3', 0.4); });
-shapeList.addEventListener('click', (e) => { const target = e.target.closest('li'); if (target && !isTransitioning && !target.classList.contains('active')) { setupAudio(); playSound('sounds/select.mp3', 0.5); shapeList.querySelector('.active')?.classList.remove('active'); target.classList.add('active'); currentShapeName = target.dataset.shape; transitionToShape(target); } });
-colorPicker.addEventListener('click', () => playSound('sounds/select.mp3', 0.5));
+shapeList.addEventListener('click', (e) => { const target = e.target.closest('li'); if (target && !isTransitioning && !target.classList.contains('active')) {
+    setupAudio(); // The audio system is now initialized here.
+    playSound('sounds/select.mp3', 0.5);
+    shapeList.querySelector('.active')?.classList.remove('active');
+    target.classList.add('active');
+    currentShapeName = target.dataset.shape;
+    transitionToShape(target);
+}});
+colorPicker.addEventListener('click', () => {
+    setupAudio(); // Also initialize on color picker click if it's the first interaction.
+    playSound('sounds/select.mp3', 0.5);
+});
 colorPicker.addEventListener('input', (e) => updateAccentColor(e.target.value));
 const handleSliderChange = debounce(() => transitionToShape(shapeList.querySelector('.active')), 250);
 polySlider.addEventListener('input', handleSliderChange);
@@ -122,7 +141,14 @@ function animate() { requestAnimationFrame(animate); controls.update(); drawVisu
 function handleResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); controls.handleResize(); visualizerCanvas.width = visualizerCanvas.clientWidth; visualizerCanvas.height = visualizerCanvas.clientHeight; }
 window.addEventListener('resize', handleResize);
 
-// --- INITIALIZATION ---
-async function init() { await populateModelList(); handleResize(); updateAccentColor(colorPicker.value, 0); transitionToShape(shapeList.querySelector('.active')); setupAudio(); animate(); }
+// --- INITIALIZATION (UPDATED) ---
+async function init() {
+    await populateModelList();
+    handleResize();
+    updateAccentColor(colorPicker.value, 0);
+    transitionToShape(shapeList.querySelector('.active'));
+    // REMOVED `setupAudio()` call from here.
+    animate();
+}
 
 init();

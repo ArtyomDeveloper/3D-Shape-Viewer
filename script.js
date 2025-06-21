@@ -25,7 +25,7 @@ controls.dynamicDampingFactor = 0.2;
 // --- AUDIO & VISUALIZER ---
 const music = document.getElementById('bg-music');
 const loadingOverlay = document.getElementById('loading-overlay');
-const loadingStatusText = document.getElementById('loading-status-text');
+const enterContent = document.getElementById('enter-content');
 const enterButton = document.getElementById('enter-button');
 const muteButton = document.getElementById('mute-button');
 music.volume = 0.4;
@@ -50,26 +50,9 @@ const shapeManager = { createPrimitive: (shapeName, detail) => { const size = 1.
 function createActiveMaterial() { if (currentRenderMode === 'filled') { return new THREE.MeshStandardMaterial({ color: activeColor, roughness: 0.5, metalness: 0.1 }); } else { return new THREE.MeshBasicMaterial({ color: activeColor, wireframe: true }); } }
 
 // --- CORE FUNCTIONS ---
-// GITHUB PAGES FIX: Use relative paths for sounds
 function playSound(src, volume = 0.5) { const sound = new Audio(src); sound.volume = volume; sound.play(); }
-async function populateModelList() {
-    try {
-        // GITHUB PAGES FIX: Use a relative path for the fetch request
-        const response = await fetch('models.json');
-        const models = await response.json();
-        models.forEach(model => {
-            const li = document.createElement('li');
-            li.innerText = model.name;
-            li.dataset.shape = model.name;
-            li.dataset.type = 'model';
-            li.dataset.path = model.path;
-            shapeList.appendChild(li);
-        });
-    } catch (error) {
-        console.error("Could not load or parse models.json:", error);
-    }
-}
-function transitionToShape(targetElement) { if (isTransitioning) return; isTransitioning = true; const shapeName = targetElement.dataset.shape; const type = targetElement.dataset.type || 'primitive'; const path = targetElement.dataset.path; const detail = parseFloat(polySlider.value); detailSection.style.display = (type === 'primitive') ? 'flex' : 'none'; const onNewMeshReady = (newMesh) => { if (currentMesh) newMesh.rotation.copy(currentMesh.rotation); newMesh.scale.set(0, 0, 0); const timeline = gsap.timeline({ onComplete: () => { currentMesh = newMesh; isTransitioning = false; } }); if (currentMesh) { timeline.to(currentMesh.scale, { x: 0, y: 0, z: 0, duration: 0.6, ease: 'power3.in', onComplete: () => scene.remove(currentMesh) }); } scene.add(newMesh); timeline.to(newMesh.scale, { x: 1, y: 1, z: 1, duration: 1.0, ease: 'elastic.out(1, 0.75)' }, currentMesh ? ">-0.4" : ">"); }; if (type === 'model') shapeManager.loadModel(path, onNewMeshReady); else onNewMeshReady(shapeManager.createPrimitive(shapeName, detail)); }
+async function populateModelList() { try { const response = await fetch('models.json'); const models = await response.json(); models.forEach(model => { const li = document.createElement('li'); li.innerText = model.name; li.dataset.shape = model.name; li.dataset.type = 'model'; li.dataset.path = model.path; shapeList.appendChild(li); }); } catch (error) { console.error("Could not load or parse models.json.", error); } }
+function transitionToShape(targetElement) { if (isTransitioning) return; isTransitioning = true; const shapeName = targetElement.dataset.shape; const type = targetElement.dataset.type || 'primitive'; const path = targetElement.dataset.path; const detail = parseFloat(polySlider.value); detailSection.style.display = (type === 'primitive') ? 'flex' : 'none'; const onNewMeshReady = (newMesh) => { if (currentMesh) newMesh.rotation.copy(currentMesh.rotation); newMesh.scale.set(0, 0, 0); const timeline = gsap.timeline({ onComplete: () => { currentMesh = newMesh; isTransitioning = false; } }); if (currentMesh) { timeline.to(currentMesh.scale, { x: 0, y: 0, z: 0, duration: 0.6, ease: 'power3.in', onComplete: () => scene.remove(currentMesh) }); } scene.add(newMesh); timeline.to(newMesh.scale, { x: 1, y: 1, z: 1, duration: 1.0, ease: 'elastic.out(1, 0.75)' }, currentMesh ? ">-0.4" : ">"); }; return new Promise(resolve => { if (type === 'model') { shapeManager.loadModel(path, (mesh) => { onNewMeshReady(mesh); resolve(); }); } else { onNewMeshReady(shapeManager.createPrimitive(shapeName, detail)); resolve(); } }); }
 function updateRenderMode() { if (!currentMesh) return; currentMesh.traverse(child => { if (child.isMesh) child.material = createActiveMaterial(); }); }
 function updateAccentColor(colorStr, duration = 1.0) { const newColor = new THREE.Color(colorStr); gsap.to(activeColor, { r: newColor.r, g: newColor.g, b: newColor.b, duration: duration, ease: 'power2.out', onUpdate: () => { const currentCssColor = activeColor.getStyle(); const rgb = `${Math.round(activeColor.r*255)}, ${Math.round(activeColor.g*255)}, ${Math.round(activeColor.b*255)}`; visualizerColor = currentCssColor; const root = document.documentElement; root.style.setProperty('--accent-color', currentCssColor); root.style.setProperty('--accent-rgb', rgb); root.style.setProperty('--accent-color-gradient', `linear-gradient(90deg, rgba(${rgb}, 0.5) 0%, rgba(${rgb}, 0.15) 100%)`); if (currentMesh) { currentMesh.traverse(child => { if (child.isMesh) { child.material.color.copy(activeColor); } }); } } }); }
 function debounce(func, wait) { let timeout; return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
@@ -90,27 +73,32 @@ function animate() { requestAnimationFrame(animate); if(starfield) starfield.rot
 function handleResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); controls.handleResize(); visualizerCanvas.width = visualizerCanvas.clientWidth; visualizerCanvas.height = visualizerCanvas.clientHeight; }
 window.addEventListener('resize', handleResize);
 
-// --- INITIALIZATION ---
+// --- INITIALIZATION (DEFINITIVE RACE CONDITION FIX) ---
 async function init() {
     createStarfield();
     handleResize();
     updateAccentColor(colorPicker.value, 0);
     animate();
+
+    const loadAssets = async () => {
+        await populateModelList();
+        await transitionToShape(shapeList.querySelector('.active'));
+    };
+
+    const loadingPromises = [
+        loadAssets(),
+        new Promise(resolve => setTimeout(resolve, 3000)) // Enforce minimum load time
+    ];
     
-    const loadingPromises = [ populateModelList(), transitionToShape(shapeList.querySelector('.active')), new Promise(resolve => { if (music.readyState >= 4) resolve(); else music.addEventListener('canplaythrough', resolve, { once: true }); }), new Promise(resolve => setTimeout(resolve, 3000)) ];
     await Promise.all(loadingPromises);
     
-    loadingStatusText.innerText = "SYSTEMS ONLINE";
     loadingOverlay.classList.add('ready');
 
     enterButton.addEventListener('click', () => {
         playSound('sounds/select.mp3', 0.5);
         loadingOverlay.classList.add('loaded');
         setupAudio();
-        
-        setTimeout(() => {
-            loadingOverlay.style.display = 'none';
-        }, 500);
+        setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500);
     }, { once: true });
 }
 

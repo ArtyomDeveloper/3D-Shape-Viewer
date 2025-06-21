@@ -7,45 +7,54 @@
 body { font-family: 'Inter', sans-serif; background-color: #000; color: #fff; overflow: hidden; }
 
 /* --- LOADING SCREEN STYLES --- */
-#loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 1000; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease-out; opacity: 1; }
+#loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 1000; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease-out; }
 #loading-overlay.loaded { opacity: 0; pointer-events: none; }
-.loading-content { text-align: center; color: rgba(255, 255, 255, 0.6); }
-#loading-status-text { font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; }
-#enter-button { font-family: 'Inter', sans-serif; font-size: 1.1rem; font-weight: 600; color: #fff; background-color: transparent; border: 2px solid var(--accent-color); padding: 15px 35px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease-out; box-shadow: 0 0 15px -5px var(--accent-color); }
-#enter-button:hover { background-color: rgba(var(--accent-rgb), 0.1); box-shadow: 0 0 25px 0px var(--accent-color); transform: translateY(-3px); }
+#loading-wrapper { display: flex; align-items: center; gap: 80px; transition: opacity 0.4s ease-out; }
+.loader-column { text-align: center; }
+#loading-status-text { font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(255, 255, 255, 0.6); }
+#enter-content { text-align: center; }
 #loading-subtext { font-size: 0.75rem; letter-spacing: 1px; margin-top: 15px; color: rgba(255, 255, 255, 0.5); }
-.hidden { opacity: 0; pointer-events: none; }
-#loading-overlay.ready .loader-container, #loading-overlay.ready #loading-status-text { opacity: 0; }
-#loading-overlay.ready #enter-button, #loading-overlay.ready #loading-subtext { opacity: 1; pointer-events: all; }
+.hidden { opacity: 0; pointer-events: none; display: none !important; }
+#loading-overlay.ready #loading-wrapper { opacity: 0; position: absolute; pointer-events: none; }
+#loading-overlay.ready #enter-content { display: block !important; opacity: 1; pointer-events: all; }
 
-/* --- NEW STACKED LOADER STYLES --- */
-.loader-container {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 30px auto;
-    position: relative;
+/* --- "ATOMIC ORBIT" LOADER STYLES --- */
+.loader-container { width: 60px; height: 60px; margin: 0 auto 30px auto; position: relative; transform-style: preserve-3d; animation: spin-container 8s infinite linear; }
+.loader-fragment { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 50%; opacity: 0.8; }
+.loader-fragment:nth-child(1) { transform: rotateY(70deg) rotateX(20deg); }
+.loader-fragment:nth-child(2) { transform: rotateY(-70deg) rotateX(40deg); }
+.loader-fragment:nth-child(3) { transform: rotateX(70deg) rotateZ(60deg); }
+.loader-fragment:nth-child(4) { transform: rotateX(-70deg) rotateZ(80deg); }
+@keyframes spin-container { from { transform: rotateY(0deg) rotateZ(0deg); } to { transform: rotateY(360deg) rotateZ(360deg); } }
+
+/* --- REQUIREMENTS BOX STYLES --- */
+#requirements-box { width: 100%; max-width: 450px; text-align: left; opacity: 0; animation: fade-in 1s 0.5s ease-out forwards; }
+#requirements-box h3 { font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.8); margin-bottom: 12px; }
+#requirements-box ul { list-style-position: inside; padding-left: 5px; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); }
+#requirements-box li { padding: 4px 0; }
+@keyframes fade-in { to { opacity: 1; } }
+
+/* --- ENTER BUTTON STYLES (THE FIX) --- */
+#enter-button {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff; /* Solid white text */
+    background-color: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.6); /* Neutral border */
+    padding: 15px 35px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    box-shadow: none; /* No default glow */
 }
-.loader-fragment {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 2px solid var(--accent-color);
-    border-radius: 12px;
-    animation: stack-and-spin 2s infinite ease-in-out;
-}
-/* Stagger the animations for a cooler effect */
-.loader-fragment:nth-child(2) { animation-duration: 2.2s; animation-delay: -0.5s; }
-.loader-fragment:nth-child(3) { animation-duration: 2.4s; animation-delay: -1.0s; }
-.loader-fragment:nth-child(4) { animation-duration: 2.6s; animation-delay: -1.5s; }
-
-@keyframes stack-and-spin {
-    50% { transform: rotate(180deg) scale(0.8); }
+#enter-button:hover {
+    background-color: rgba(255, 255, 255, 0.08); /* Subtle white background on hover */
+    border-color: #fff; /* Solid white border on hover */
+    transform: translateY(-3px);
 }
 
-
-/* --- MUTE BUTTON STYLES --- */
+/* --- The rest of the CSS is unchanged --- */
 #mute-button { position: fixed; top: 25px; right: 275px; width: 40px; height: 40px; background: transparent; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s ease; z-index: 50; }
 #mute-button:hover { border-color: var(--accent-color); box-shadow: 0 0 15px 0 var(--accent-color); }
 #mute-button svg { color: #fff; transition: color 0.2s ease; }
@@ -54,7 +63,6 @@ body { font-family: 'Inter', sans-serif; background-color: #000; color: #fff; ov
 #mute-button .icon-muted { display: none; }
 #mute-button.muted .icon-unmuted { display: none; }
 #mute-button.muted .icon-muted { display: block; }
-
 #c { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 #visualizer-canvas { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); max-width: 800px; width: 90%; height: 120px; z-index: 10; pointer-events: none; mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); }
 .sidebar { position: fixed; top: 0; right: 0; width: 250px; height: 100vh; background: rgba(20, 20, 22, 0.7); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-left: 1px solid rgba(255, 255, 255, 0.1); box-shadow: -10px 0px 30px rgba(0, 0, 0, 0.3); padding: 30px 0; display: flex; flex-direction: column; }

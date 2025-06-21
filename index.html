@@ -9,38 +9,41 @@
 </head>
 <body>
     <div id="loading-overlay">
-        <div class="loading-content">
-            <!-- REPLACE the old loader div... -->
-            <!-- <div class="loader-shape"></div> -->
-
-            <!-- ...WITH THIS NEW structure for the holographic loader -->
-            <div class="loader-container">
-                <div class="loader-fragment"></div>
-                <div class="loader-fragment"></div>
-                <div class="loader-fragment"></div>
-                <div class="loader-fragment"></div>
+        <!-- This wrapper holds the elements that appear during the initial load -->
+        <div id="loading-wrapper">
+            <div class="loader-column">
+                <div class="loader-container">
+                    <div class="loader-fragment"></div>
+                    <div class="loader-fragment"></div>
+                    <div class="loader-fragment"></div>
+                    <div class="loader-fragment"></div>
+                </div>
+                <p id="loading-status-text">LOADING ASSETS</p>
             </div>
-
-            <p id="loading-status-text">LOADING ASSETS</p>
-            <button id="enter-button" class="hidden">Enter Experience</button>
-            <p id="loading-subtext" class="hidden">Click to engage audio-visual experience.</p>
+            <div id="requirements-box">
+                <h3>Recommended for optimal performance:</h3>
+                <ul>
+                    <li><strong>GPU:</strong> NVIDIA GTX 10-series / AMD RX 500-series or newer</li>
+                    <li><strong>RAM:</strong> 8GB+ System Memory</li>
+                    <li><strong>Storage:</strong> Solid State Drive (SSD)</li>
+                    <li><strong>Network:</strong> 25 Mbps+ Internet Connection</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- This content is separate and is only shown when loading is complete -->
+        <div id="enter-content" class="hidden">
+             <button id="enter-button">Enter Experience</button>
+             <p id="loading-subtext">Click to engage audio-visual experience.</p>
         </div>
     </div>
     
     <!-- The rest of your HTML remains exactly the same... -->
-    <button id="mute-button" class="muted">
-        <svg class="icon-unmuted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-        <svg class="icon-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
-    </button>
+    <button id="mute-button" class="muted"><svg class="icon-unmuted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg><svg class="icon-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg></button>
     <canvas id="visualizer-canvas"></canvas>
     <canvas id="c"></canvas>
     <audio id="bg-music" loop src="sounds/music.mp3"></audio>
-    <div class="sidebar">
-        <h2>Render Mode</h2><ul id="render-mode-list"><li data-mode="wireframe" class="active">Wireframe</li><li data-mode="filled">Filled</li></ul>
-        <h2>Shapes</h2><div class="shape-list-container"><ul id="shape-list"><li data-shape="Cube" class="active">Cube</li><li data-shape="TorusKnot">Torus Knot</li><li data-shape="Teapot">Teapot</li><li data-shape="Sphere">Sphere</li><li data-shape="Torus">Torus</li><li data-shape="Cone">Cone</li><li data-shape="Cylinder">Cylinder</li></ul></div>
-        <div id="detail-section"><h2>Detail Level</h2><div class="slider-container"><span>Low</span><input type="range" id="poly-slider" min="0" max="1" step="0.01" value="0.5"><span>High</span></div></div>
-        <h2 for="color-picker">Color</h2><input type="color" id="color-picker" value="#C64600">
-    </div>
+    <div class="sidebar"><h2>Render Mode</h2><ul id="render-mode-list"><li data-mode="wireframe" class="active">Wireframe</li><li data-mode="filled">Filled</li></ul><h2>Shapes</h2><div class="shape-list-container"><ul id="shape-list"><li data-shape="Cube" class="active">Cube</li><li data-shape="TorusKnot">Torus Knot</li><li data-shape="Teapot">Teapot</li><li data-shape="Sphere">Sphere</li><li data-shape="Torus">Torus</li><li data-shape="Cone">Cone</li><li data-shape="Cylinder">Cylinder</li></ul></div><div id="detail-section"><h2>Detail Level</h2><div class="slider-container"><span>Low</span><input type="range" id="poly-slider" min="0" max="1" step="0.01" value="0.5"><span>High</span></div></div><h2 for="color-picker">Color</h2><input type="color" id="color-picker" value="#C64600"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
